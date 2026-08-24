@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz — Jour 1 · Formation des animateurs</title>
+<style>
+  :root{
+    --terra:#B85042;
+    --terra-dark:#8F3A2F;
+    --dark:#3B2A26;
+    --dark-2:#4A3630;
+    --sand:#F3EDE3;
+    --sand-dark:#E7DFD0;
+    --sage:#6E8F7C;
+    --sage-light:#E3EBE5;
+    --gold:#C9A227;
+    --ink:#2B2321;
+    --muted:#6F6259;
+    --white:#FFFFFF;
+    --font-display:Georgia,'Cambria','Iowan Old Style',serif;
+    --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --radius:14px;
+    --shadow:0 12px 30px -12px rgba(59,42,38,0.28);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1100px 500px at 8% -10%, rgba(184,80,66,0.10), transparent 60%),
+      radial-gradient(900px 500px at 105% 0%, rgba(110,143,124,0.14), transparent 55%),
+      var(--sand);
+    color:var(--ink);
+    font-family:var(--font-body);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  @media (prefers-reduced-motion: no-preference){
+    .fade-in{animation:fadeIn .5s ease both;}
+    .card-enter{animation:cardIn .35s cubic-bezier(.2,.8,.2,1) both;}
+    .segment.pop{animation:pop .4s cubic-bezier(.34,1.56,.64,1) both;}
+  }
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes cardIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes pop{0%{transform:scale(.7);}70%{transform:scale(1.15);}100%{transform:scale(1);}}
+
+  .app{
+    max-width:760px;
+    margin:0 auto;
+    padding:2.6rem 1.4rem 4rem;
+  }
+
+  /* ---------- Header ---------- */
+  .app-header{margin-bottom:1.6rem;}
+  .eyebrow{
+    font-size:.72rem;
+    font-weight:700;
+    letter-spacing:.14em;
+    color:var(--terra);
+    text-transform:uppercase;
+    margin-bottom:.55rem;
+  }
+  h1{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:2.5rem;
+    line-height:1.05;
+    margin:0 0 .5rem;
+    color:var(--dark);
+  }
+  .subhead{
+    margin:0;
+    color:var(--muted);
+    font-size:1rem;
+    line-height:1.5;
+  }
+  .subhead strong{color:var(--terra-dark);}
+
+  /* ---------- Reading trail (signature progress) ---------- */
+  .trail-wrap{margin:1.8rem 0 1.9rem;}
+  .trail{
+    display:flex;
+    gap:5px;
+  }
+  .segment{
+    flex:1;
+    height:9px;
+    border-radius:5px;
+    background:var(--sand-dark);
+    position:relative;
+    overflow:hidden;
+  }
+  .segment .fill{
+    position:absolute;inset:0;
+    border-radius:5px;
+    transform:scaleX(0);
+    transform-origin:left;
+    transition:transform .45s cubic-bezier(.2,.8,.2,1);
+  }
+  .segment.correct .fill{background:var(--sage);transform:scaleX(1);}
+  .segment.incorrect .fill{background:var(--terra);transform:scaleX(1);}
+  .segment.current{background:var(--sand-dark);box-shadow:0 0 0 2px var(--gold) inset;}
+  .trail-caption{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-top:.6rem;
+    font-size:.8rem;
+    color:var(--muted);
+  }
+  #counter{font-weight:600;color:var(--dark);}
+
+  /* ---------- Question card ---------- */
+  .card{
+    background:var(--white);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:1.9rem 1.8rem 1.7rem;
+  }
+  .q-kicker{
+    display:flex;align-items:center;gap:.5rem;
+    font-size:.74rem;font-weight:700;letter-spacing:.08em;
+    color:var(--sage);text-transform:uppercase;
+    margin-bottom:.75rem;
+  }
+  .q-kicker .dot{width:6px;height:6px;border-radius:50%;background:var(--sage);}
+  .q-prompt{
+    font-family:var(--font-display);
+    font-size:1.32rem;
+    line-height:1.4;
+    color:var(--dark);
+    margin:0 0 1.35rem;
+    font-weight:700;
+  }
+
+  .options{display:flex;flex-direction:column;gap:.6rem;}
+  .option{
+    display:flex;align-items:center;gap:.85rem;
+    text-align:left;
+    background:var(--sand);
+    border:1.5px solid transparent;
+    border-radius:10px;
+    padding:.85rem 1rem;
+    cursor:pointer;
+    font-family:var(--font-body);
+    font-size:.98rem;
+    color:var(--ink);
+    transition:border-color .15s ease, background .15s ease, transform .1s ease;
+  }
+  .option:hover:not(:disabled){border-color:var(--sage);background:var(--sage-light);}
+  .option:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
+  .option:active:not(:disabled){transform:scale(.995);}
+  .option:disabled{cursor:default;}
+
+  .option-letter{
+    flex:0 0 auto;
+    width:28px;height:28px;
+    border-radius:50%;
+    background:var(--sand-dark);
+    color:var(--dark);
+    font-weight:700;font-size:.85rem;
+    display:flex;align-items:center;justify-content:center;
+    transition:background .15s ease,color .15s ease;
+  }
+  .option-text{flex:1;line-height:1.4;}
+  .option-icon{flex:0 0 auto;width:20px;height:20px;opacity:0;transition:opacity .15s ease;}
+
+  .option.is-correct{
+    background:var(--sage-light);
+    border-color:var(--sage);
+  }
+  .option.is-correct .option-letter{background:var(--sage);color:var(--white);}
+  .option.is-correct .option-icon{opacity:1;}
+
+  .option.is-wrong{
+    background:#F6E4E0;
+    border-color:var(--terra);
+  }
+  .option.is-wrong .option-letter{background:var(--terra);color:var(--white);}
+  .option.is-wrong .option-icon{opacity:1;}
+
+  .option.is-muted{opacity:.55;}
+
+  /* ---------- Feedback panel ---------- */
+  .feedback{
+    margin-top:1.3rem;
+    background:var(--dark);
+    border-radius:12px;
+    padding:1.1rem 1.25rem;
+    color:var(--white);
+    display:none;
+  }
+  .feedback.show{display:block;}
+  .feedback .label{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:1.02rem;
+    margin-bottom:.3rem;
+  }
+  .feedback.correct .label{color:var(--sage-light);}
+  .feedback.incorrect .label{color:#F3D9B8;}
+  .feedback p{margin:0;font-size:.92rem;line-height:1.55;color:#E3D9D2;}
+
+  .actions{
+    margin-top:1.5rem;
+    display:flex;justify-content:flex-end;
+  }
+  .btn{
+    font-family:var(--font-body);
+    font-weight:700;
+    font-size:.92rem;
+    border:none;
+    border-radius:9px;
+    padding:.75rem 1.5rem;
+    cursor:pointer;
+    background:var(--terra);
+    color:var(--white);
+    transition:background .15s ease, transform .1s ease;
+  }
+  .btn:hover{background:var(--terra-dark);}
+  .btn:active{transform:scale(.98);}
+  .btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
+  .btn.secondary{background:var(--dark);}
+  .btn.secondary:hover{background:var(--dark-2);}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+
+  /* ---------- Results screen ---------- */
+  .results{
+    background:var(--white);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:2.2rem 1.9rem;
+    text-align:center;
+  }
+  .results .score-ring{
+    width:148px;height:148px;
+    margin:0 auto 1.1rem;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:conic-gradient(var(--terra) calc(var(--pct)*1%), var(--sand-dark) 0);
+    position:relative;
+  }
+  .results .score-ring::before{
+    content:"";
+    position:absolute;inset:10px;
+    border-radius:50%;
+    background:var(--white);
+  }
+  .results .score-num{
+    position:relative;
+    font-family:var(--font-display);
+    font-size:1.9rem;
+    font-weight:700;
+    color:var(--dark);
+  }
+  .results .score-num small{display:block;font-family:var(--font-body);font-size:.72rem;font-weight:600;color:var(--muted);letter-spacing:.05em;margin-top:.15rem;}
+  .results h2{
+    font-family:var(--font-display);
+    font-size:1.5rem;
+    margin:.2rem 0 .4rem;
+    color:var(--dark);
+  }
+  .results p.tier{color:var(--muted);margin:0 0 1.6rem;font-size:.98rem;}
+
+  .review-toggle{
+    background:none;border:none;color:var(--terra-dark);
+    font-weight:700;font-size:.88rem;cursor:pointer;
+    text-decoration:underline;text-underline-offset:3px;
+    margin-bottom:1rem;
+    font-family:var(--font-body);
+  }
+  .review{display:none;text-align:left;margin-top:.5rem;}
+  .review.show{display:block;}
+  .review-item{
+    display:flex;gap:.7rem;
+    padding:.9rem 0;
+    border-top:1px solid var(--sand-dark);
+  }
+  .review-item:first-child{border-top:none;}
+  .review-mark{
+    flex:0 0 auto;width:22px;height:22px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    margin-top:.15rem;
+  }
+  .review-mark.ok{background:var(--sage);}
+  .review-mark.ko{background:var(--terra);}
+  .review-mark svg{width:12px;height:12px;}
+  .review-body .q{font-weight:700;font-size:.9rem;color:var(--dark);margin-bottom:.2rem;}
+  .review-body .a{font-size:.85rem;color:var(--muted);}
+
+  .results-actions{
+    margin-top:1.7rem;
+    display:flex;gap:.7rem;justify-content:center;flex-wrap:wrap;
+  }
+
+  footer.app-footer{margin-top:1.4rem;font-size:.8rem;color:var(--muted);text-align:center;}
+
+  @media (max-width:520px){
+    h1{font-size:2rem;}
+    .card{padding:1.5rem 1.2rem;}
+    .q-prompt{font-size:1.15rem;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="app-header fade-in">
+    <div class="eyebrow">Formation des animateurs · Programme de lecture en bamanankan</div>
+    <h1>Quiz — Jour 1</h1>
+    <p class="subhead">Matériel, éthique &amp; protection de l'enfant — <strong>15 questions · 15&nbsp;% de la note finale</strong></p>
+  </header>
+
+  <div class="trail-wrap fade-in">
+    <div class="trail" id="trail"></div>
+    <div class="trail-caption">
+      <span id="counter">Question 1 / 15</span>
+      <span id="scoreLive"></span>
+    </div>
+  </div>
+
+  <main id="quizArea"></main>
+
+  <footer class="app-footer">Guide du formateur — support d'évaluation autonome</footer>
+</div>
+
+<script>
+const QUESTIONS = [
+  {
+    prompt: "Pourquoi un enfant apprend-il d'abord à lire en bamanankan plutôt qu'en français ?",
+    options: [
+      "Parce que le français sera enseigné plus tard, dans une autre école",
+      "Parce qu'il comprend déjà les mots et les sons de sa langue, donc il comprend ce qu'il lit dès le début",
+      "Parce que le programme n'a pas de contenu disponible en français",
+      "Parce que les parents le préfèrent en général"
+    ],
+    correct: 1,
+    explanation: "L'enfant connaît déjà les mots et les sons du bamanankan : il n'a pas à deviner le sens de ce qu'il lit, ce qui est la base d'une lecture solide.",
+    good: "Exact !", bad: "Pas tout à fait."
+  },
+  {
+    prompt: "Quel est le lien entre la lecture en bamanankan et l'apprentissage du français ?",
+    options: [
+      "Il n'y a aucun lien, ce sont deux apprentissages complètement séparés",
+      "Bien lire en bamanankan retarde l'apprentissage du français",
+      "Les mécanismes de la lecture se transfèrent d'une langue à l'autre : bien lire en bamanankan prépare et facilite le français",
+      "Le bamanankan remplace définitivement le français dans le programme"
+    ],
+    correct: 2,
+    explanation: "Le bamanankan est un pont, pas un obstacle : les mécanismes de lecture appris (reconnaître des sons, assembler des lettres) se transfèrent ensuite au français.",
+    good: "Tout à fait juste !", bad: "Non, c'est l'inverse."
+  },
+  {
+    prompt: "En quoi la tablette aide-t-elle face au manque d'enseignants et aux classes chargées ?",
+    options: [
+      "Elle remplace complètement le besoin d'un animateur",
+      "Elle permet à un seul animateur d'accompagner efficacement un grand nombre d'enfants",
+      "Elle réduit le nombre d'enfants qui peuvent participer au programme",
+      "Elle n'a aucun rapport avec ce sujet"
+    ],
+    correct: 1,
+    explanation: "Face aux classes chargées et au manque d'enseignants, la tablette permet à un animateur d'encadrer efficacement davantage d'enfants — mais elle reste un outil, pas un maître.",
+    good: "Bien vu !", bad: "Pas exactement."
+  },
+  {
+    prompt: "Parmi les propositions suivantes, laquelle décrit le rôle de l'animateur ?",
+    options: [
+      "Un maître d'école qui punit les erreurs des enfants",
+      "Un réparateur qui démonte lui-même les tablettes en panne",
+      "Un organisateur, un accompagnateur et un encourageur, qui prépare, guide et valorise les efforts",
+      "Une personne qui n'intervient jamais pendant la séance"
+    ],
+    correct: 2,
+    explanation: "L'animateur prépare le matériel, accompagne sans faire à la place, encourage les efforts, veille au matériel et fait le lien avec la communauté.",
+    good: "Exact !", bad: "Ce n'est pas la bonne réponse."
+  },
+  {
+    prompt: "Un animateur peut-il rester seul avec un enfant dans une salle fermée ou isolée ?",
+    options: [
+      "Oui, si l'enfant le demande",
+      "Oui, tant que la porte reste entrouverte",
+      "Non, jamais — l'animateur doit toujours rester visible des autres",
+      "Oui, uniquement pour aider un enfant en difficulté"
+    ],
+    correct: 2,
+    explanation: "C'est une règle non négociable de protection de l'enfant : l'animateur ne reste jamais seul avec un enfant dans un lieu fermé ou isolé, quelle que soit la raison.",
+    good: "Correct, c'est une règle absolue.", bad: "Attention, c'est une règle de sécurité importante."
+  },
+  {
+    prompt: "Que doit faire un animateur qui observe ou apprend un cas de maltraitance envers un enfant ?",
+    options: [
+      "Ne rien dire pour ne pas causer de problème dans la communauté",
+      "Le signaler immédiatement au superviseur",
+      "Régler le problème lui-même avec la famille",
+      "Attendre d'avoir des preuves supplémentaires avant d'agir"
+    ],
+    correct: 1,
+    explanation: "Signaler n'est pas dénoncer, c'est protéger. Tout cas de maltraitance observé ou rapporté doit remonter immédiatement au superviseur.",
+    good: "C'est la bonne réaction.", bad: "Ce n'est pas la bonne réaction à avoir."
+  },
+  {
+    prompt: "Un animateur peut-il photographier ou filmer les enfants pendant une séance ?",
+    options: [
+      "Oui, librement, pour documenter son travail",
+      "Non, jamais, sauf autorisation du programme et des parents",
+      "Oui, mais seulement les garçons",
+      "Oui, si c'est pour les réseaux sociaux du programme"
+    ],
+    correct: 1,
+    explanation: "Aucune photo ou vidéo d'enfant ne doit être prise sans autorisation explicite du programme et des parents.",
+    good: "Exactement.", bad: "Non, cette règle est stricte."
+  },
+  {
+    prompt: "Quelle est la règle d'or à respecter à l'ouverture et à la fermeture de la caisse de matériel ?",
+    options: [
+      "Vérifier uniquement que les tablettes sont chargées",
+      "Compter le matériel et noter le nombre sur la fiche, à chaque fois",
+      "Nettoyer les casques avant de les ranger",
+      "Demander à un enfant de vérifier le contenu"
+    ],
+    correct: 1,
+    explanation: "On compte à l'ouverture, on compte à la fermeture. Le nombre doit être identique et noté sur la fiche à chaque fois.",
+    good: "Bonne réponse, c'est la règle d'or.", bad: "Ce n'est pas la règle principale."
+  },
+  {
+    prompt: "Que doit faire un animateur si une tablette tombe en panne ?",
+    options: [
+      "Essayer de la démonter et de la réparer lui-même",
+      "La jeter et continuer sans elle",
+      "La noter et la signaler, sans essayer de la réparer",
+      "La donner à un enfant pour voir s'il arrive à la réparer"
+    ],
+    correct: 2,
+    explanation: "L'animateur n'est pas un réparateur de tablettes : une panne se note et se signale au superviseur, on ne démonte jamais rien soi-même.",
+    good: "C'est exact.", bad: "Ce n'est pas la bonne attitude."
+  },
+  {
+    prompt: "Quelle précaution doit-on toujours respecter avec la coque de protection de la tablette ?",
+    options: [
+      "La tablette peut en sortir pendant le rangement, mais pas pendant la séance",
+      "La tablette ne sort jamais de sa coque, ni pendant la séance, ni au rangement",
+      "La coque n'est utile que pour le transport",
+      "On peut retirer la coque si elle gêne l'enfant"
+    ],
+    correct: 1,
+    explanation: "La coque protège en permanence des chocs et de la poussière ; la tablette ne doit jamais en sortir, à aucun moment.",
+    good: "Tout à fait.", bad: "Non, la règle est plus stricte que ça."
+  },
+  {
+    prompt: "Comment doit-on débrancher un casque correctement ?",
+    options: [
+      "En tirant sur le fil, c'est plus rapide",
+      "En tirant directement sur la fiche, jamais sur le fil",
+      "En coupant l'alimentation de la tablette d'abord",
+      "Peu importe la méthode, du moment que ça va vite"
+    ],
+    correct: 1,
+    explanation: "On tire toujours sur la fiche, jamais sur le fil, pour ne pas abîmer le casque.",
+    good: "Correct !", bad: "Ce n'est pas le bon geste."
+  },
+  {
+    prompt: "Que doit-on faire avec le volume avant de donner un casque à un enfant ?",
+    options: [
+      "Le monter au maximum pour qu'il entende bien",
+      "Le baisser d'abord, puis le monter doucement si besoin",
+      "Le laisser au réglage précédent, peu importe lequel",
+      "Couper complètement le son"
+    ],
+    correct: 1,
+    explanation: "On baisse toujours le volume avant de donner le casque à un enfant, puis on augmente progressivement si nécessaire, pour protéger ses oreilles.",
+    good: "Exactement.", bad: "Attention à l'ouïe de l'enfant : ce n'est pas la bonne pratique."
+  },
+  {
+    prompt: "Pendant la charge solaire, où doit-on placer les tablettes ?",
+    options: [
+      "En plein soleil, à côté du panneau solaire",
+      "À l'ombre — seul le panneau solaire reste au soleil",
+      "Peu importe, tant qu'elles sont branchées",
+      "Dans la caisse fermée pendant toute la charge"
+    ],
+    correct: 1,
+    explanation: "Le soleil charge le panneau, mais il abîme la tablette : les tablettes doivent rester à l'ombre pendant la charge, seul le panneau reste exposé.",
+    good: "Bonne réponse.", bad: "Attention, le soleil direct abîme la tablette."
+  },
+  {
+    prompt: "Comment sait-on qu'une tablette est bien en train de se charger ?",
+    options: [
+      "En vérifiant le voyant de charge (icône éclair sur la batterie)",
+      "En attendant simplement quelques heures sans rien vérifier",
+      "En secouant légèrement la tablette",
+      "Il n'existe aucun moyen de le vérifier"
+    ],
+    correct: 0,
+    explanation: "On vérifie le voyant de charge affiché sur l'écran (icône éclair sur la batterie) après avoir branché la tablette au système solaire.",
+    good: "C'est ça.", bad: "Il existe bien un indicateur à vérifier."
+  },
+  {
+    prompt: "Quel principe résume le mieux l'ensemble du Jour 1 ?",
+    options: [
+      "La technologie remplace entièrement le rôle de l'animateur",
+      "La sécurité de l'enfant et le soin du matériel passent avant tout, même avant la séance de lecture elle-même",
+      "Seule la vitesse d'exécution des gestes techniques compte",
+      "Le matériel est plus important que les enfants"
+    ],
+    correct: 1,
+    explanation: "Tout le Jour 1 tourne autour de ce principe : la sécurité de l'enfant et le soin apporté au matériel sont les fondations sur lesquelles repose tout le reste du programme.",
+    good: "Parfaitement résumé !", bad: "Relis bien le principe clé du Jour 1."
+  }
+];
+
+const ICON_CHECK = '<svg viewBox="0 0 20 20" fill="none"><path d="M4 10.5l4 4 8-9" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ICON_CROSS = '<svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="white" stroke-width="2.4" stroke-linecap="round"/></svg>';
+
+let current = 0;
+let answered = new Array(QUESTIONS.length).fill(null); // stores selected index or null
+
+const trailEl = document.getElementById('trail');
+const quizArea = document.getElementById('quizArea');
+const counterEl = document.getElementById('counter');
+const scoreLiveEl = document.getElementById('scoreLive');
+
+function buildTrail(){
+  trailEl.innerHTML = '';
+  QUESTIONS.forEach((_, i) => {
+    const seg = document.createElement('div');
+    seg.className = 'segment';
+    seg.id = 'seg-' + i;
+    const fill = document.createElement('div');
+    fill.className = 'fill';
+    seg.appendChild(fill);
+    trailEl.appendChild(seg);
+  });
+}
+
+function updateTrail(){
+  QUESTIONS.forEach((_, i) => {
+    const seg = document.getElementById('seg-' + i);
+    seg.classList.remove('current','correct','incorrect');
+    if (answered[i] !== null){
+      const isCorrect = answered[i] === QUESTIONS[i].correct;
+      seg.classList.add(isCorrect ? 'correct' : 'incorrect');
+    } else if (i === current){
+      seg.classList.add('current');
+    }
+  });
+}
+
+function currentScore(){
+  return answered.reduce((acc, sel, i) => acc + (sel !== null && sel === QUESTIONS[i].correct ? 1 : 0), 0);
+}
+
+function renderQuestion(){
+  const q = QUESTIONS[current];
+  const already = answered[current];
+
+  counterEl.textContent = 'Question ' + (current + 1) + ' / ' + QUESTIONS.length;
+  scoreLiveEl.textContent = already !== null || current > 0 ? '' : '';
+
+  const optionsHtml = q.options.map((opt, i) => {
+    let cls = 'option';
+    let icon = '';
+    let disabledAttr = '';
+    if (already !== null){
+      disabledAttr = 'disabled';
+      if (i === q.correct){ cls += ' is-correct'; icon = ICON_CHECK; }
+      else if (i === already){ cls += ' is-wrong'; icon = ICON_CROSS; }
+      else { cls += ' is-muted'; }
+    }
+    const letter = String.fromCharCode(65 + i);
+    return '<button class="' + cls + '" ' + disabledAttr + ' data-index="' + i + '">'
+      + '<span class="option-letter">' + letter + '</span>'
+      + '<span class="option-text">' + opt + '</span>'
+      + '<span class="option-icon">' + icon + '</span>'
+      + '</button>';
+  }).join('');
+
+  let feedbackHtml = '';
+  if (already !== null){
+    const isCorrect = already === q.correct;
+    feedbackHtml = '<div class="feedback show ' + (isCorrect ? 'correct' : 'incorrect') + '">'
+      + '<div class="label">' + (isCorrect ? q.good : q.bad) + '</div>'
+      + '<p>' + q.explanation + '</p>'
+      + '</div>';
+  }
+
+  const isLast = current === QUESTIONS.length - 1;
+  const nextLabel = isLast ? 'Voir mon résultat' : 'Question suivante →';
+  const actionsHtml = already !== null
+    ? '<div class="actions"><button class="btn" id="nextBtn">' + nextLabel + '</button></div>'
+    : '';
+
+  quizArea.innerHTML =
+    '<div class="card card-enter">'
+    + '<div class="q-kicker"><span class="dot"></span>Jour 1 · Matériel, éthique &amp; protection</div>'
+    + '<p class="q-prompt">' + q.prompt + '</p>'
+    + '<div class="options">' + optionsHtml + '</div>'
+    + feedbackHtml
+    + actionsHtml
+    + '</div>';
+
+  if (already === null){
+    quizArea.querySelectorAll('.option').forEach(btn => {
+      btn.addEventListener('click', () => selectOption(parseInt(btn.dataset.index, 10)));
+    });
+  } else {
+    const nb = document.getElementById('nextBtn');
+    if (nb) nb.addEventListener('click', goNext);
+  }
+
+  updateTrail();
+}
+
+function selectOption(index){
+  answered[current] = index;
+  renderQuestion();
+}
+
+function goNext(){
+  if (current < QUESTIONS.length - 1){
+    current += 1;
+    renderQuestion();
+  } else {
+    renderResults();
+  }
+}
+
+function renderResults(){
+  const score = currentScore();
+  const total = QUESTIONS.length;
+  const pct = Math.round((score / total) * 100);
+
+  let tier;
+  if (pct >= 87) tier = "Excellent ! Le Jour 1 est parfaitement maîtrisé.";
+  else if (pct >= 67) tier = "Bien joué. Quelques points à revoir avant de continuer.";
+  else tier = "À retravailler — relisez le support du Jour 1 avant de continuer.";
+
+  const reviewHtml = QUESTIONS.map((q, i) => {
+    const ok = answered[i] === q.correct;
+    return '<div class="review-item">'
+      + '<div class="review-mark ' + (ok ? 'ok' : 'ko') + '">' + (ok ? ICON_CHECK : ICON_CROSS) + '</div>'
+      + '<div class="review-body"><div class="q">' + (i+1) + '. ' + q.prompt + '</div>'
+      + '<div class="a">Réponse correcte : ' + q.options[q.correct] + '</div></div>'
+      + '</div>';
+  }).join('');
+
+  quizArea.innerHTML =
+    '<div class="results card-enter" style="--pct:' + pct + '">'
+    + '<div class="score-ring"><div class="score-num">' + score + '/' + total + '<small>SCORE</small></div></div>'
+    + '<h2>' + pct + ' % de bonnes réponses</h2>'
+    + '<p class="tier">' + tier + '</p>'
+    + '<button class="review-toggle" id="reviewToggle">Revoir le détail des 15 questions</button>'
+    + '<div class="review" id="reviewPanel">' + reviewHtml + '</div>'
+    + '<div class="results-actions">'
+    + '<button class="btn" id="restartBtn">Recommencer le quiz</button>'
+    + '</div>'
+    + '</div>';
+
+  document.getElementById('reviewToggle').addEventListener('click', (e) => {
+    const panel = document.getElementById('reviewPanel');
+    panel.classList.toggle('show');
+    e.target.textContent = panel.classList.contains('show')
+      ? 'Masquer le détail des 15 questions'
+      : 'Revoir le détail des 15 questions';
+  });
+  document.getElementById('restartBtn').addEventListener('click', restart);
+
+  counterEl.textContent = 'Terminé';
+  trailEl.querySelectorAll('.segment').forEach(s => s.classList.remove('current'));
+}
+
+function restart(){
+  current = 0;
+  answered = new Array(QUESTIONS.length).fill(null);
+  renderQuestion();
+}
+
+buildTrail();
+renderQuestion();
+</script>
+</body>
+</html>
